@@ -2,8 +2,22 @@
 # https://code.google.com/codejam/contest/32016/dashboard#s=p0
 import fileinput
 
+test_input = """\
+2
+3
+1 3 -5
+-2 4 1
+5
+1 2 3 4 5
+1 0 1 0 1
+"""
 
 def main(lines):
+    """
+    >>> main(iter(test_input.split('\\n')))
+    Case #1: -25
+    Case #2: 6
+    """
     cases = int(lines.next())
     for case_number in range(1, cases + 1):
         lines.next()
