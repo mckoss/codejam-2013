@@ -63,7 +63,6 @@ class TreasureTest(object):
         for _i in range(num_chests):
             nums = read_ints(lines)
             self.chests.append({'lock': nums[0], 'keys': nums[2:]})
-        self.prefix = []
         self.suffix = []
         self.orderable = []
         self.terminal_keys = Counter()
@@ -80,7 +79,6 @@ class TreasureTest(object):
             from pprint import pprint
             print "Starting keys: %r" % self.keys
             pprint(list(enumerate(self.chests)))
-            print "Prefix chests: %r" % self.prefix
             print "Orderable chests: %r" % self.orderable
             print "Suffix chests %r" % self.suffix
             print "Terminal keys: %r" % self.terminal_keys
@@ -92,7 +90,7 @@ class TreasureTest(object):
 
     def lex_sort(self, order):
         # TBD
-        return self.prefix + order + self.suffix
+        return order + self.suffix
 
     def _open_order(self, keys, chests):
         """ Return True iff chests can be open starting with keys. """
