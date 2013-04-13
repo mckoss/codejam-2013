@@ -33,9 +33,20 @@ def main(lines):
     Case #3: 2
     """
     ranges = parse(lines)
-    n = 2
-    for (i, (_first, _last)) in enumerate(ranges):
-        print "Case #%d: %d" % (i + 1, n)
+    for (i, (first, last)) in enumerate(ranges):
+        count = 0
+        if is_palindrome(str(first)) and is_fair_square(first):
+            count += 1
+            print first
+        p = first
+        while True:
+            p = next_palindrome(p)
+            if p > last:
+                break
+            if is_fair_square(p):
+                count += 1
+                print p
+        print "Case #%d: %d" % (i + 1, count)
 
 
 def next_palindrome(x):
@@ -86,8 +97,27 @@ def next_palindrome(x):
         return int(l + m + l[::-1])
     l = str(int(l) + 1)
     if len(l) > half_len:
-        return int(l + l[:1:-1])
+        return int(l[:-1] + l[::-1])
     return int(l + l[::-1])
+
+
+def is_fair_square(x):
+    """
+    >>> is_fair_square(9)
+    True
+    >>> is_fair_square(2)
+    False
+    >>> is_fair_square(99)
+    False
+    >>> is_fair_square(100)
+    False
+    >>> is_fair_square(121)
+    True
+    >>> is_fair_square(676)
+    False
+    """
+    r = isqrt(x)
+    return r * r == x and is_palindrome(str(r))
 
 
 def isqrt(x):
@@ -115,6 +145,26 @@ def isqrt(x):
         if abs(b - a) <= 1:
             break
     return min(a, b)
+
+
+def is_palindrome(s):
+    """
+    >>> is_palindrome('1')
+    True
+    >>> is_palindrome('12')
+    False
+    >>> is_palindrome('11')
+    True
+    >>> is_palindrome('121')
+    True
+    >>> is_palindrome('122')
+    False
+    """
+    half = len(s) // 2
+    is_odd = len(s) % 2 == 1
+    if is_odd:
+        return s[:half] == s[:half:-1]
+    return s[:half] == s[:half - 1:-1]
 
 
 if __name__ == '__main__':
