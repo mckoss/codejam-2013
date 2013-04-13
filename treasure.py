@@ -3,6 +3,8 @@
 import fileinput
 from collections import Counter
 
+DEBUG = True
+
 test_input = """\
 3
 1 4
@@ -64,45 +66,51 @@ class TreasureTest(object):
         self.prefix = []
         self.suffix = []
         self.orderable = []
+        self.pre_keys = Counter(self.keys)
+        self.terminal_keys = Counter()
         for i in range(len(self.chests)):
             chest = self.chests[i]
-            if chest['keys'] == 0:
+            if len(chest['keys']) == 0:
                 self.suffix.append(i)
+                self.terminal_keys.update([self.chests[i]['lock']])
                 continue
-            if chest['lock'] in chest['keys']:
+            if chest['lock'] in chest['keys'] and chest['lock'] in self.keys:
                 self.prefix.append(i)
+                self.pre_keys.update(self.chests[i]['keys'])
+                self.pre_keys.subtract([self.chests[i]['lock']])
                 continue
             self.orderable.append(i)
 
+
     def open_order(self):
-        return self._open_order(self.pre_keys(), self.pre_order())
+        if DEBUG:
+            from pprint import pprint
+            print "Starting keys: %r" % self.keys
+            pprint(list(enumerate(self.chests)))
+            print "Prefix chests: %r" % self.prefix
+            print "Orderable chests: %r" % self.orderable
+            print "Suffix chests %r" % self.suffix
+            print "Prefix keys: %r" % self.pre_keys
+            print "Terminal keys: %r" % self.terminal_keys
 
-    def pre_keys(self):
-        keys = Counter(self.keys)
-        for i in self.prefix:
-            keys.update([self.chests[i]['lock']])
-            keys.subtract(self.chests[i]['keys'])
+        order = self._open_order(self.pre_keys, self.orderable)
+        if order is not None:
+            return self.lex_sort(order)
+        return order
 
-        self.terminal_keys = Counter()
-        for i in self.suffix:
-            self.terminal_keys.update([self.chests[i]['lock']])
-
-        print "Prefix chests: %r" % self.prefix
-        print "Orderable chests: %r" % self.orderable
-        print "Suffix chests %r" % self.suffix
-        print "Prefix keys: %r" % keys
-        print "Terminal keys: %r" % self.terminal_keys
-
-        return keys
-
-    def pre_order(self):
-        return self.orderable
+    def lex_sort(self, order):
+        # TBD
+        return self.prefix + order + self.suffix
 
     def _open_order(self, keys, chests):
         """ Return True iff chests can be open starting with keys. """
-        print self.prefix + chests + self.suffix
         if len(chests) == 0:
-            return [] if len(self.terminal_keys - keys) == 0 else None
+            missing_keys = self.terminal_keys - keys
+            if len(missing_keys) == 0:
+                if DEBUG:
+                    print "Using %r to open %r" % (keys, self.terminal_keys)
+                return []
+            return None
         if sum(keys.values()) == 0:
             return None
         for i, first in enumerate(chests):
