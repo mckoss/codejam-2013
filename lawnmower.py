@@ -46,8 +46,74 @@ def parse(lines):
 def main(lines):
     """
     >>> main(iter(test_input))
+    Case #1: YES
+    Case #2: NO
+    Case #3: YES
     """
-    _lawns = parse(lines)
+    lawns = parse(lines)
+    for i, lawn in enumerate(lawns):
+        min_h, max_h = height_range(lawn)
+        for height in range(min_h, max_h + 1):
+            if not unmow(lawn, height):
+                break
+        print "Case #%d: %s" % (i + 1, "YES" if len(lawn) == 0 else "NO")
+
+
+def unmow(lawn, height):
+    """
+    >>> lawn = [[2, 1, 2], [1, 1, 1], [2, 1, 2]]
+    >>> unmow(lawn, 1)
+    True
+    >>> lawn
+    [[2, 2], [2, 2]]
+    >>> unmow(lawn, 2)
+    True
+    >>> lawn
+    []
+    """
+    max_row = len(lawn)
+    row = 0
+    while row < max_row:
+        for col in range(len(lawn[row])):
+            if lawn[row][col] != height:
+                break
+        else:
+            lawn.pop(row)
+            max_row -= 1
+            continue
+        row += 1
+
+    if len(lawn) == 0:
+        return True
+
+    max_col = len(lawn[0])
+    col = 0
+    while col < max_col:
+        for row in range(len(lawn)):
+            if lawn[row][col] != height:
+                break
+        else:
+            for row in range(len(lawn)):
+                lawn[row].pop(col)
+            max_col -= 1
+        col += 1
+
+    for row in range(max_row):
+        for col in range(max_col):
+            if lawn[row][col] <= height:
+                return False
+
+    return True
+
+
+def height_range(lawn):
+    """
+    >>> height_range([[2, 1, 2], [1, 1, 1], [2, 1, 2]])
+    (1, 2)
+    """
+    min_h = min(min(row) for row in lawn)
+    max_h = max(max(row) for row in lawn)
+    return (min_h, max_h)
 
 
 if __name__ == '__main__':
