@@ -66,7 +66,6 @@ class TreasureTest(object):
         self.prefix = []
         self.suffix = []
         self.orderable = []
-        self.pre_keys = Counter(self.keys)
         self.terminal_keys = Counter()
         for i in range(len(self.chests)):
             chest = self.chests[i]
@@ -74,13 +73,7 @@ class TreasureTest(object):
                 self.suffix.append(i)
                 self.terminal_keys.update([self.chests[i]['lock']])
                 continue
-            if chest['lock'] in chest['keys'] and chest['lock'] in self.keys:
-                self.prefix.append(i)
-                self.pre_keys.update(self.chests[i]['keys'])
-                self.pre_keys.subtract([self.chests[i]['lock']])
-                continue
             self.orderable.append(i)
-
 
     def open_order(self):
         if DEBUG:
@@ -90,10 +83,9 @@ class TreasureTest(object):
             print "Prefix chests: %r" % self.prefix
             print "Orderable chests: %r" % self.orderable
             print "Suffix chests %r" % self.suffix
-            print "Prefix keys: %r" % self.pre_keys
             print "Terminal keys: %r" % self.terminal_keys
 
-        order = self._open_order(self.pre_keys, self.orderable)
+        order = self._open_order(self.keys, self.orderable)
         if order is not None:
             return self.lex_sort(order)
         return order
@@ -104,6 +96,9 @@ class TreasureTest(object):
 
     def _open_order(self, keys, chests):
         """ Return True iff chests can be open starting with keys. """
+        keys = Counter(keys)
+        prefix = self.free_chests(keys, chests)
+
         if len(chests) == 0:
             missing_keys = self.terminal_keys - keys
             if len(missing_keys) == 0:
@@ -111,8 +106,10 @@ class TreasureTest(object):
                     print "Using %r to open %r" % (keys, self.terminal_keys)
                 return []
             return None
+
         if sum(keys.values()) == 0:
             return None
+
         for i, first in enumerate(chests):
             chest = self.chests[first]
             if keys[chest['lock']] == 0:
@@ -121,11 +118,29 @@ class TreasureTest(object):
             keys.update(chest['keys'])
             order = self._open_order(keys, chests[:i] + chests[i + 1:])
             if order is not None:
-                return [first] + order
-            keys.subtract(chest['keys'])
-            keys.update([chest['lock']])
+                return prefix + [first] + order
 
         return None
+
+    def free_chests(self, keys, chests):
+        """
+        Front load no-brainer chests - don't diminish key set.
+
+        Modifies arguments.
+        """
+        prefix = []
+        for i in chests:
+            chest = self.chests[i]
+            if chest['lock'] in chest['keys'] and chest['lock'] in self.keys:
+                prefix.append(i)
+                keys.update(chest['keys'])
+                keys.subtract([chest['lock']])
+        for i in prefix:
+            chests.remove(i)
+
+        return prefix
+
+
 
 
 def read_ints(lines):
