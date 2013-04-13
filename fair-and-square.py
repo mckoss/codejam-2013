@@ -37,15 +37,14 @@ def main(lines):
         count = 0
         if is_palindrome(str(first)) and is_fair_square(first):
             count += 1
-            print first
-        p = first
+        r = isqrt(first)
         while True:
-            p = next_palindrome(p)
+            r = next_palindrome(r)
+            p = r * r
             if p > last:
                 break
-            if is_fair_square(p):
+            if is_palindrome(str(p)):
                 count += 1
-                print p
         print "Case #%d: %d" % (i + 1, count)
 
 
