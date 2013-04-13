@@ -61,17 +61,50 @@ class TreasureTest(object):
         for _i in range(num_chests):
             nums = read_ints(lines)
             self.chests.append({'lock': nums[0], 'keys': nums[2:]})
+        self.prefix = []
+        self.suffix = []
+        self.orderable = []
+        for i in range(len(self.chests)):
+            chest = self.chests[i]
+            if chest['keys'] == 0:
+                self.suffix.append(i)
+                continue
+            if chest['lock'] in chest['keys']:
+                self.prefix.append(i)
+                continue
+            self.orderable.append(i)
 
     def open_order(self):
-        return self._open_order(self.keys, range(len(self.chests)))
+        return self._open_order(self.pre_keys(), self.pre_order())
+
+    def pre_keys(self):
+        keys = Counter(self.keys)
+        for i in self.prefix:
+            keys.update([self.chests[i]['lock']])
+            keys.subtract(self.chests[i]['keys'])
+
+        self.terminal_keys = Counter()
+        for i in self.suffix:
+            self.terminal_keys.update([self.chests[i]['lock']])
+
+        print "Prefix chests: %r" % self.prefix
+        print "Orderable chests: %r" % self.orderable
+        print "Suffix chests %r" % self.suffix
+        print "Prefix keys: %r" % keys
+        print "Terminal keys: %r" % self.terminal_keys
+
+        return keys
+
+    def pre_order(self):
+        return self.orderable
 
     def _open_order(self, keys, chests):
         """ Return True iff chests can be open starting with keys. """
+        print self.prefix + chests + self.suffix
         if len(chests) == 0:
-            return []
+            return [] if len(self.terminal_keys - keys) == 0 else None
         if sum(keys.values()) == 0:
             return None
-        keys = Counter(keys)
         for i, first in enumerate(chests):
             chest = self.chests[first]
             if keys[chest['lock']] == 0:
