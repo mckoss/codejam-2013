@@ -90,7 +90,7 @@ class TreasureTest(object):
 
     def _open_order(self, keys, chests):
         """ Return list of chestsiff they can be open starting with keys. """
-        pre, post, pre_keys = self.pre_post_chests(None, keys, chests)
+        pre, post, pre_keys = self.pre_post_chests(keys, chests)
 
         if len(post) == 0:
             missing_keys = self.terminal_keys - pre_keys
@@ -103,60 +103,39 @@ class TreasureTest(object):
         if sum(keys.values()) == 0:
             return None
 
-        for i, first in enumerate(chests):
-            # Looking for next CONSTRAINED chest
-            if self.is_free_chest(first, keys):
-                continue
-            pre, post, pre_keys = self.pre_post_chests(first, keys, chests)
-
+        for i, first in enumerate(post):
+            keys = Counter(pre_keys)
             chest = self.chests[first]
 
-            if pre_keys[chest['lock']] == 0:
+            if keys[chest['lock']] == 0:
                 continue
 
-            pre_keys.subtract([chest['lock']])
-            pre_keys.update(chest['keys'])
-            order = self._open_order(pre_keys, post)
+            keys.subtract([chest['lock']])
+            keys.update(chest['keys'])
+            order = self._open_order(keys, post[:i] + post[i + 1:])
             if order is not None:
-                # Return lowest feasible lexicographical ordering
                 return pre + [first] + order
 
         return None
 
-    def pre_post_chests(self, target, keys, chests):
+    def pre_post_chests(self, keys, chests):
         """
         Front load no-brainer chests - don't diminish key set.
         """
         keys = Counter(keys)
         pre = []
         post = list(chests)
-        need_key = False
-        if target is not None:
-            post.remove(target)
-            need_key = keys[self.chests[target]['lock']] != 0
-
-        def add_prefix(i):
-            pre.append(i)
-            post.remove(i)
-            keys.update(chest['keys'])
-            keys.subtract([chest['lock']])
 
         for i in chests:
             chest = self.chests[i]
-            if self.is_free_chest(i, keys):
-                if target is None or i < target:
-                    add_prefix(i)
-                    continue
-                if need_key and chest['lock'] in chest['keys']:
-                    add_prefix(i)
-                    need_key = False
-                    continue
+            if chest['lock'] in chest['keys'] and keys[chest['lock']] != 0:
+                pre.append(i)
+                post.remove(i)
+                chest = self.chests[i]
+                keys.update(chest['keys'])
+                keys.subtract([chest['lock']])
 
         return pre, post, keys
-
-    def is_free_chest(self, i, keys):
-        chest = self.chests[i]
-        return chest['lock'] in chest['keys'] and keys[chest['lock']] != 0
 
 
 def read_ints(lines):
