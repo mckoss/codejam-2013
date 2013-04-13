@@ -70,6 +70,18 @@ def unmow(lawn, height):
     True
     >>> lawn
     []
+    >>> lawn = [[1, 1, 1, 1, 1],
+    ... [1, 1, 1, 1, 1],
+    ... [2, 1, 2, 1, 1],
+    ... [2, 1, 2, 1, 1],
+    ... [2, 1, 2, 1, 1],
+    ... [2, 1, 2, 1, 1],
+    ... [1, 1, 1, 1, 1],
+    ... [2, 1, 2, 1, 1]]
+    >>> unmow(lawn, 1)
+    True
+    >>> lawn
+    [[2, 2], [2, 2], [2, 2], [2, 2], [2, 2]]
     """
     max_row = len(lawn)
     row = 0
@@ -96,6 +108,7 @@ def unmow(lawn, height):
             for row in range(len(lawn)):
                 lawn[row].pop(col)
             max_col -= 1
+            continue
         col += 1
 
     for row in range(max_row):
