@@ -2,6 +2,7 @@
 # https://code.google.com/codejam/contest/2270488/dashboard#s=p3
 import fileinput
 from collections import Counter
+from itertools import permutations
 
 test_input = """\
 3
@@ -46,7 +47,19 @@ def main(lines):
     """
     tests = parse(lines)
     for i, treasure in enumerate(tests):
-        print "Case #%d: %r" % (i + 1, treasure.keys)
+        for order in permutations(range(len(treasure.chests))):
+            keys = Counter(treasure.keys)
+            for trial in order:
+                chest = treasure.chests[trial]
+                if keys[chest['lock']] <= 0:
+                    break
+                keys.subtract([chest['lock']])
+                keys.update(chest['keys'])
+            else:
+                print "Case #%d: %s" % (i + 1, ' '.join([str(x + 1) for x in order]))
+                break
+        else:
+            print "Case #%d: IMPOSSIBLE" % (i + 1)
 
 
 class TreasureTest(object):
@@ -56,7 +69,7 @@ class TreasureTest(object):
         self.chests = []
         for _i in range(num_chests):
             nums = read_ints(lines)
-            self.chests.append({'lock': nums[0], 'keys': Counter(nums[2:])})
+            self.chests.append({'lock': nums[0], 'keys': nums[2:]})
 
 
 def read_ints(lines):
