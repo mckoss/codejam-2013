@@ -77,68 +77,86 @@ class TreasureTest(object):
     def open_order(self):
         if DEBUG:
             from pprint import pprint
-            print "Starting keys: %r" % self.keys
+            print "Starting keys: %r" % list(self.keys.elements())
             pprint(list(enumerate(self.chests)))
             print "Orderable chests: %r" % self.orderable
             print "Suffix chests %r" % self.suffix
-            print "Terminal keys: %r" % self.terminal_keys
+            print "Terminal keys: %r" % list(self.terminal_keys.elements())
 
         order = self._open_order(self.keys, self.orderable)
-        if order is not None:
-            return self.lex_sort(order)
-        return order
-
-    def lex_sort(self, order):
-        # TBD
+        if order is None:
+            return None
         return order + self.suffix
 
     def _open_order(self, keys, chests):
-        """ Return True iff chests can be open starting with keys. """
-        keys = Counter(keys)
-        prefix = self.free_chests(keys, chests)
+        """ Return list of chestsiff they can be open starting with keys. """
+        pre, post, pre_keys = self.pre_post_chests(None, keys, chests)
 
-        if len(chests) == 0:
-            missing_keys = self.terminal_keys - keys
+        if len(post) == 0:
+            missing_keys = self.terminal_keys - pre_keys
             if len(missing_keys) == 0:
                 if DEBUG:
-                    print "Using %r to open %r" % (keys, self.terminal_keys)
-                return []
+                    print "Using %s to open %s" % (list(pre_keys.elements()), list(self.terminal_keys.elements()))
+                return pre
             return None
 
         if sum(keys.values()) == 0:
             return None
 
         for i, first in enumerate(chests):
-            chest = self.chests[first]
-            if keys[chest['lock']] == 0:
+            # Looking for next CONSTRAINED chest
+            if self.is_free_chest(first, keys):
                 continue
-            keys.subtract([chest['lock']])
-            keys.update(chest['keys'])
-            order = self._open_order(keys, chests[:i] + chests[i + 1:])
+            pre, post, pre_keys = self.pre_post_chests(first, keys, chests)
+
+            chest = self.chests[first]
+
+            if pre_keys[chest['lock']] == 0:
+                continue
+
+            pre_keys.subtract([chest['lock']])
+            pre_keys.update(chest['keys'])
+            order = self._open_order(pre_keys, post)
             if order is not None:
-                return prefix + [first] + order
+                # Return lowest feasible lexicographical ordering
+                return pre + [first] + order
 
         return None
 
-    def free_chests(self, keys, chests):
+    def pre_post_chests(self, target, keys, chests):
         """
         Front load no-brainer chests - don't diminish key set.
-
-        Modifies arguments.
         """
-        prefix = []
+        keys = Counter(keys)
+        pre = []
+        post = list(chests)
+        need_key = False
+        if target is not None:
+            post.remove(target)
+            need_key = keys[self.chests[target]['lock']] != 0
+
+        def add_prefix(i):
+            pre.append(i)
+            post.remove(i)
+            keys.update(chest['keys'])
+            keys.subtract([chest['lock']])
+
         for i in chests:
             chest = self.chests[i]
-            if chest['lock'] in chest['keys'] and chest['lock'] in self.keys:
-                prefix.append(i)
-                keys.update(chest['keys'])
-                keys.subtract([chest['lock']])
-        for i in prefix:
-            chests.remove(i)
+            if self.is_free_chest(i, keys):
+                if target is None or i < target:
+                    add_prefix(i)
+                    continue
+                if need_key and chest['lock'] in chest['keys']:
+                    add_prefix(i)
+                    need_key = False
+                    continue
 
-        return prefix
+        return pre, post, keys
 
-
+    def is_free_chest(self, i, keys):
+        chest = self.chests[i]
+        return chest['lock'] in chest['keys'] and keys[chest['lock']] != 0
 
 
 def read_ints(lines):
