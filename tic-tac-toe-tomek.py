@@ -51,7 +51,7 @@ def parse(lines):
     for _i in range(num_games):
         game = ''
         for _j in range(4):
-            game += lines.next()
+            game += lines.next()[0:4]
         lines.next()
         games.append(game)
     return games
