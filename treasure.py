@@ -74,6 +74,20 @@ class TreasureTest(object):
                 continue
             self.orderable.append(i)
 
+    def is_feasible(self):
+        """ Sum of all keys must be >= 0. """
+        keys = Counter(self.keys)
+        for chest in self.chests:
+            keys.update(chest['keys'])
+            keys.subtract([chest['lock']])
+        for value in keys.values():
+            if value < 0:
+                if DEBUG:
+                    print "Not enough keys: %r" % keys
+                return False
+        # TBD - find cycles
+        return True
+
     def open_order(self):
         if DEBUG:
             from pprint import pprint
@@ -82,6 +96,9 @@ class TreasureTest(object):
             print "Orderable chests: %r" % self.orderable
             print "Suffix chests %r" % self.suffix
             print "Terminal keys: %r" % list(self.terminal_keys.elements())
+
+        if not self.is_feasible():
+            return None
 
         order = self._open_order(self.keys, self.orderable)
         if order is None:
