@@ -3,7 +3,7 @@
 import fileinput
 from collections import Counter
 
-DEBUG = True
+DEBUG = False
 
 test_input = """\
 3
@@ -112,8 +112,6 @@ class TreasureTest(object):
         if len(post) == 0:
             missing_keys = self.terminal_keys - pre_keys
             if len(missing_keys) == 0:
-                if DEBUG:
-                    print "Using %s to open %s" % (list(pre_keys.elements()), list(self.terminal_keys.elements()))
                 return pre
             return None
 
