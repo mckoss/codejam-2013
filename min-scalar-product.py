@@ -12,6 +12,7 @@ test_input = """\
 1 0 1 0 1
 """
 
+
 def main(lines):
     """
     >>> main(iter(test_input.split('\\n')))
